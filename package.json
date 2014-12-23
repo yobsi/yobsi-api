@@ -1,0 +1,24 @@
+{
+  "name": "yobsi-api",
+  "version": "0.0.1",
+  "description": "HTTP API for yobsi app.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha **/test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yobsi/yobsi-api.git"
+  },
+  "author": "Wilson Balderrama",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yobsi/yobsi-api/issues"
+  },
+  "homepage": "https://github.com/yobsi/yobsi-api",
+  "devDependencies": {
+    "mocha": "^2.1.0",
+    "should": "^4.4.1",
+    "supertest": "^0.15.0"
+  }
+}
