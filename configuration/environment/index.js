@@ -1,7 +1,7 @@
 'use strict';
 
 var path = require('path');
-var _ = require('underscore');
+var _ = require('lodash');
 
 function requiredProcessEnv (name) {
   if (!process.env[name]) {
@@ -10,8 +10,11 @@ function requiredProcessEnv (name) {
 
   return process.env[name];
 }
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
 
 var all = {
+  ip: process.env.IP || 'http://localhost',
   env: process.env.NODE_ENV,
   port: process.env.PORT || 9000,
   seedDB: false,
@@ -27,7 +30,7 @@ var all = {
   }
 };
 
-modul.exports = _.merge(
+module.exports = _.merge(
     all, 
     require('./' + process.env.NODE_ENV + '.js') || {}
   );

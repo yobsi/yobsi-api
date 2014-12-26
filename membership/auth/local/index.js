@@ -12,12 +12,12 @@ router.post('/', function (req, res, next) {
     var token;
 
     if (error) {
-      res.json(401, error);
+      res.status(401).json(error);
       return;
     }
 
     if (!user) {
-      res.json(404, {message: 'Something went wrong, please try again.'});
+      res.status(404).json({message: 'Something went wrong, please try again.'});
       return;
     }
 

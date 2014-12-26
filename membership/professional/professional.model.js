@@ -10,11 +10,16 @@ var UserSchema = new Schema({
   hashedPassword: String,
   provider: String,
   salt: String,
+  skills: [String],
   facebook: {
+  },
 
+  rating: {type: Number, default: 5},
+  location: {
+    lng: Number,
+    lat: Number
   }
 });
-
 
 UserSchema
   .virtual('password')
@@ -26,7 +31,6 @@ UserSchema
   .get(function () {
     return this._password;
   });
-
 
 UserSchema
   .path('email')
@@ -105,6 +109,10 @@ UserSchema.methods = {
     return crypto.pbkdf2Sync(password, salt, 10000, 64).toString('base64');
   }
 };
+
+function validatePresenceOf (value) {
+  return value && value.length;
+}
 
 module.exports = mongoose.model('Professional', UserSchema);
 

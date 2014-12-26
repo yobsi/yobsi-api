@@ -22,7 +22,7 @@ function isAuthenticated () {
         }
 
         if (!user) {
-          res.send(401);
+          res.status(401).send({});
           return;
         }
 
@@ -39,7 +39,7 @@ function signToken (id) {
     },
     config.secrets.session,
     {
-      expireInMinutes: 60*5;
+      expireInMinutes: 60*5
     }
   );
 }
