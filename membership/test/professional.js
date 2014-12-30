@@ -6,7 +6,7 @@ var app = require('../../index.js');
 var async = require('async');
 var util = require('./util.js');
 
-describe('Professional API Test', function () {
+describe.skip('Professional API Test', function () {
 
   before(function (done) {
     util.cleanProfessionalsOnDB(done);

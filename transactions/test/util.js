@@ -1,15 +1,29 @@
 'use strict';
 
 var Job = require('../job/job.model.js');
+var Professional = require('../../membership/professional/professional.model.js');
 var request = require('supertest');
 var async = require('async');
 
 module.exports = {
   createProfessionals: createProfessionals,
   cleanJobsOnDB: cleanJobsOnDB,
+  cleanProfessionalsOnDB: cleanProfessionalsOnDB,
   searchForProfessional: searchForProfessional,
-  authenticateUser: authenticateUser
+  authenticateUser: authenticateUser,
+  createJob: createJob
 };
+
+function createJob (token, app, clientEmail, skillsRequired, cb) {
+  request(app)
+    .post('/api/jobs')
+    .set('Authorization', 'Bearer ' + token)
+    .send({
+      clientEmail: clientEmail,
+      skillsRequired: skillsRequired
+    })
+    .end(cb);
+}
 
 function createProfessionals (app, done) {
   async.series(
@@ -19,7 +33,7 @@ function createProfessionals (app, done) {
           name: 'Wilson Balderrama',
           email: 'wilson.balderrama@gmail.com',
           password: 'sesamo',
-          skills: ['programmer']
+          skills: ['node.js']
         };
 
         request(app)
@@ -32,7 +46,7 @@ function createProfessionals (app, done) {
           name: 'Keila Balderrama',
           email: 'keila.balderrama@gmail.com',
           password: 'sesamo',
-          skills: ['manager']
+          skills: ['node.js', 'mongodb']
         };
 
         request(app)
@@ -45,7 +59,7 @@ function createProfessionals (app, done) {
           name: 'Santiago Balderrama',
           email: 'santiago.balderrama@gmail.com',
           password: 'sesamo',
-          skills: ['programmer', 'android']
+          skills: ['express.js', 'node.js']
         };
 
         request(app)
@@ -65,6 +79,14 @@ function authenticateUser (app, body, cb) {
     .post('/auth/local')
     .send(body)
     .end(cb);
+}
+
+function cleanProfessionalsOnDB (done) {
+  Professional.remove({}).exec().then(
+    function () {
+      done();
+    }
+  );
 }
 
 function cleanJobsOnDB (done) {
