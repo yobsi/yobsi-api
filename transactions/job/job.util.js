@@ -5,10 +5,74 @@ var async = require('async');
 module.exports = {
   findProfessionalBy: findProfessionalBy,
   notifyJobAvailableTo: notifyJobAvailableTo,
-  notifyWorkerWasSelected: notifyWorkerWasSelected
+  notifyWorkerWasSelected: notifyWorkerWasSelected,
+  isJobAvailable: isJobAvailable,
+  takeTheJob: takeTheJob
 };
 
-function notifyWorkerWasSelected (io, workerEmail, jobid, cb) {
+function isJobAvailable (jobId, cb) {
+  Job.findOne({
+    _id: jobId
+  }, function (err, job) {
+    if (err) {
+      cb(err);
+      return;
+    }
+    console.log('isJobAvailable');
+    console.log(job.state);
+    cb(err, job.state === 'new');
+  });
+}
+
+function takeTheJob (jobId, professionalEmail, cb) {
+  Job.findOneAndUpdate({
+    _id: jobId,
+    state: 'new'
+  },{
+    state: 'evaluating',
+    professionalEmail: professionalEmail
+  }, function (err, job) {
+    if (err) {
+      cb(err);
+      return;
+    }
+
+    if (!job) {
+      console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+      console.log(professionalEmail + ' could not take the job =(');
+      console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+      cb(new Error('job was taken.'));
+      return;
+    }
+
+    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+    console.log(professionalEmail + ' could take the job :)');
+    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+      
+    cb(null, job);
+
+    // console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+    // console.log('isJobAvailable');
+    // console.log(job.state);
+
+    // if (job.state === 'new') {
+    //   console.log('this code was run');
+    //   console.log('professionalEmail: ' + professionalEmail);
+    //   job.state = 'evaluating';
+    //   job.professionalEmail = professionalEmail;
+    //   job.save(function (err, j) {
+    //     console.log('j: ');
+    //     console.log(j);
+    //     console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+    //     cb();
+    //   });
+    // } 
+
+
+  });
+}
+
+function notifyWorkerWasSelected (io, workerEmail, jobId, cb) {
   async.waterfall(
     [
       function getJob (next) {
@@ -46,7 +110,7 @@ function notifyWorkerWasSelected (io, workerEmail, jobid, cb) {
       },
 
       function notifyWorker (client, next) {
-        io.to(workerEmail).emit('you-were-selected', {
+        io.to(workerEmail).emit('want-to-take-job', {
           clientEmail: client.email,
           jobId: jobId
         });
@@ -54,6 +118,7 @@ function notifyWorkerWasSelected (io, workerEmail, jobid, cb) {
       }
     ],
     function (err, res) {
+      cb(err);
     }
   );  
 }

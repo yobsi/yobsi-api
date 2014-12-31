@@ -11,8 +11,6 @@ module.exports.register = function (socketio, socket) {
   _io = socketio;
   _socket = socket;
 
-  console.log('io was set up?');
-  console.log(!_io);
   socket.on('want-to-take-job', someoneWantsTheJob.bind(undefined, socketio, socket));
 };
 
@@ -52,20 +50,31 @@ function someoneWantsTheJob (io, socket, data) {
   var jobId = data.jobId;
   var professionalEmail = data.professionalEmail;
 
+  console.log('////////////////////////////');
+  console.log('someoneWantsTheJob: ');
+  console.log(professionalEmail);
+  console.log('////////////////////////////');
+
   async.series(
     [
-      function checkIfJobWasTaken (next) {
-        jobUtil.isJobAvailable(jobId, function (err, available) {
-          if (!available) {
-            next(new Error ('Job was taken, sorry.'));
-            return;
-          }
+      // function checkIfJobWasTaken (next) {
+      //   jobUtil.isJobAvailable(jobId, function (err, available) {
+      //     if (err) {
+      //       next(err);
+      //       return;
+      //     }
 
-          next();
-        });
-      },
+      //     if (!available) {
+      //       next(new Error ('Job was taken, sorry.'));
+      //       return;
+      //     }
+
+      //     next();
+      //   });
+      // },
 
       function takeTheJob (next) {
+        console.log('------------++++++++++++ TAKING THE JOB FOR ' + professionalEmail);
         jobUtil.takeTheJob(jobId, professionalEmail, function (err, job) {
           if (err) {
             next(err);
@@ -77,17 +86,14 @@ function someoneWantsTheJob (io, socket, data) {
       },
 
       function notifyWorkerWasSelected (next) {
+        console.log('------------++++++++++++ NOTIFYING THE WORKER ' + professionalEmail);
         jobUtil.notifyWorkerWasSelected(io, professionalEmail, jobId, function (err) {
-          if (success) {
-            next();
-            return;
-          }
-
           next(err);
         });
       }
     ],
     function (err, res) {
+      console.log('------------++++++++++++ FLOW FINISHED ' + professionalEmail);
       if (err) {
         socket.emit('want-to-take-job', {error: err});
         return;
