@@ -12,15 +12,39 @@ module.exports.register = function (socketio, socket) {
   _socket = socket;
 
   socket.on('want-to-take-job', someoneWantsTheJob.bind(undefined, socketio, socket));
+  socket.on('hire-professional', clientWantsToHireProfessional.bind(undefined, socketio, socket));
+  // socket.on('someone-wants-to-cancel-the-job', cancelJob.find(undefined, socketio, socket));
 };
 
-function jobWasCreated (jobCreated) {
-  console.log('================== jobWasCreated called');
+function cancelJob (io, socket, data) {
+  var jobId = data.jobId;
+  jobUtil.cancelJob(io, jobId, function (err, job) {
+    if (err) {
+      socket.emit('someone-wants-to-cancel-the-job', {error: err});
+      return;
+    }
 
+    socket.emit('someone-wants-to-cancel-the-job', {job: jobFound});
+  });
+}
+
+function clientWantsToHireProfessional (io, socket, data) {
+  var jobId = data.jobId;
+
+  jobUtil.hireProfessional(jobId, io, function (err, job) {
+    if (err) {
+      socket.emit('hire-professional', {error: err});
+      return;
+    }
+
+    socket.emit('hire-professional', {job: job});
+  });
+}
+
+function jobWasCreated (jobCreated) {
   async.waterfall(
     [
       function getProfessionals (next) {
-        console.log('xxxxxxxxxxxx getting professionals');
         // get all professionals suggested by the system
         jobUtil.findProfessionalBy(jobCreated.skillsRequired, function (err, professionals) {
           if (err) {
@@ -32,11 +56,7 @@ function jobWasCreated (jobCreated) {
         });
       },
       function notifyProfessionals (professionals, next) {
-        console.log('notifying professionals');
-        console.log(professionals);
         // notify professionals there is a job available
-        console.log('are we sending io?');
-        console.log(!_io);
         jobUtil.notifyJobAvailableTo(professionals, _io, jobCreated);
       }
     ],
@@ -49,11 +69,6 @@ function jobWasCreated (jobCreated) {
 function someoneWantsTheJob (io, socket, data) {
   var jobId = data.jobId;
   var professionalEmail = data.professionalEmail;
-
-  console.log('////////////////////////////');
-  console.log('someoneWantsTheJob: ');
-  console.log(professionalEmail);
-  console.log('////////////////////////////');
 
   async.series(
     [
@@ -74,7 +89,6 @@ function someoneWantsTheJob (io, socket, data) {
       // },
 
       function takeTheJob (next) {
-        console.log('------------++++++++++++ TAKING THE JOB FOR ' + professionalEmail);
         jobUtil.takeTheJob(jobId, professionalEmail, function (err, job) {
           if (err) {
             next(err);
@@ -86,14 +100,12 @@ function someoneWantsTheJob (io, socket, data) {
       },
 
       function notifyWorkerWasSelected (next) {
-        console.log('------------++++++++++++ NOTIFYING THE WORKER ' + professionalEmail);
         jobUtil.notifyWorkerWasSelected(io, professionalEmail, jobId, function (err) {
           next(err);
         });
       }
     ],
     function (err, res) {
-      console.log('------------++++++++++++ FLOW FINISHED ' + professionalEmail);
       if (err) {
         socket.emit('want-to-take-job', {error: err});
         return;

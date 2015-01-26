@@ -7,8 +7,83 @@ module.exports = {
   notifyJobAvailableTo: notifyJobAvailableTo,
   notifyWorkerWasSelected: notifyWorkerWasSelected,
   isJobAvailable: isJobAvailable,
-  takeTheJob: takeTheJob
+  takeTheJob: takeTheJob,
+  hireProfessional: hireProfessional
 };
+
+function cancelJob (io, jobId, cb) {
+  var jobFound;
+  
+  async.waterfall(
+    [
+      function updateJobStateToCancelled (next) {
+        Job.findOneAndUpdate({
+          _id: jobId
+        }, {
+          state: 'cancelled'
+        }, function (err, job) {
+          if (err) {
+            cb(err);
+            return;
+          }
+          jobFound = job;
+          cb(null, job);
+        });
+      },
+      function notifyBothSidesJobCancelled (job, next) {
+        [job.clientEmail, job.professionalEmail].forEach(function (email) {
+          io.to(email).emit('job-cancelled', {job: job});
+        });
+
+        next();
+      }
+    ],
+    function (err, res) {
+     cb(err, jobFound);
+    }
+  );
+}
+
+function hireProfessional (jobId, io, cb) {
+  var jobFound;
+
+  async.waterfall(
+    [
+      function updateJobToHiredState (next) {
+        Job.findOneAndUpdate({
+          _id: jobId
+        }, {
+          state: 'hired'
+        }, function (err, job) {
+          if (err) {
+            next(err);
+            return;
+          }
+
+          if (!job) {
+            next(new Error('no job found.'));
+            return;
+          }
+          jobFound = job;
+          next(null, job);
+        });
+      },
+      function notifyProfessional (job, next) {
+        console.log('NOTIFYING PROFESIONAL:' + job.professionalEmail);
+        io.to(job.professionalEmail).emit('you-are-hired', {job: job});
+        next(null, job);
+      }
+    ],
+    function (err, res) {
+      if (err) {
+        cb(err);
+        return;
+      }
+
+      cb(null, jobFound);
+    }
+  );
+}
 
 function isJobAvailable (jobId, cb) {
   Job.findOne({
@@ -38,37 +113,11 @@ function takeTheJob (jobId, professionalEmail, cb) {
     }
 
     if (!job) {
-      console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
-      console.log(professionalEmail + ' could not take the job =(');
-      console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
       cb(new Error('job was taken.'));
       return;
     }
-
-    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
-    console.log(professionalEmail + ' could take the job :)');
-    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
       
     cb(null, job);
-
-    // console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
-    // console.log('isJobAvailable');
-    // console.log(job.state);
-
-    // if (job.state === 'new') {
-    //   console.log('this code was run');
-    //   console.log('professionalEmail: ' + professionalEmail);
-    //   job.state = 'evaluating';
-    //   job.professionalEmail = professionalEmail;
-    //   job.save(function (err, j) {
-    //     console.log('j: ');
-    //     console.log(j);
-    //     console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
-    //     cb();
-    //   });
-    // } 
-
-
   });
 }
 

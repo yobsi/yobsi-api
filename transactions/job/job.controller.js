@@ -15,11 +15,11 @@ function createJob (req, res) {
 
   newJob.save(function (err, job) {
     if (err) {
-      res.status(400).json(err);
+      res.status(400).json({error: err.toString()});
       return;
     }
     
     jobEmitter.notifyJobCreated(job);
-    res.json(job);
+    res.json({job: job});
   });
 }

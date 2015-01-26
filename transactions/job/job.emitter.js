@@ -10,7 +10,6 @@ function JobEmitter () {
 inherits(JobEmitter, EventEmitter);
 
 JobEmitter.prototype.notifyJobCreated = function (job) {
-  console.log('emitting the notification of job creation');
   this.emit('job-created', job);
 };
 

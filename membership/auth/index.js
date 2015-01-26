@@ -1,14 +1,17 @@
 'use strict';
 
 var express = require('express');
-var passport = require('passport');
-var config = require('../../configuration/environment/index.js');
 var User = require('../professional/professional.model.js');
-
-require('./local/passport.js').setup(User, config);
-
 var router = express.Router();
 
-router.use('/local', require('./local/index.js'));
+require('./local/passport.js').setup(User);
+
+router.use('/', function (req, res, next) {
+  if (req.body.fbId) {
+    require('./facebook/index.js')(req, res, next);
+  } else {
+    require('./local/index.js')(req, res, next);
+  }
+});
 
 module.exports = router;

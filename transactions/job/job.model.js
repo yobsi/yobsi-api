@@ -3,7 +3,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var JobSchema = new Schema({
-  state: {type: String, default: 'new'}, // possible states: new, evaluating, complete
+  state: {type: String, default: 'new'}, // possible states: new, evaluating, hired, complete, cancelled
   skillsRequired: [String],
   clientEmail: String,
   professionalEmail: String,

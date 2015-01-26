@@ -57,14 +57,14 @@ describe('Job API Test', function () {
     util.cleanJobsOnDB(done);
   });
 
-  it.skip('should connect to socket server', function (done) {
-    var socket = io.connect(url, _.merge(options, {}));
-    socket.once('connect', function (data) {
-      done();
-    });
-  });
+  // it('should connect to socket server', function (done) {
+  //   var socket = io.connect(url, _.merge(options, {}));
+  //   socket.once('connect', function (data) {
+  //     done();
+  //   });
+  // });
 
-  it.skip('should create a job', function (done) {
+  it('should create a job', function (done) {
     var keilaSocket;
     var santiagoSocket;
 
@@ -72,8 +72,6 @@ describe('Job API Test', function () {
 
       [
         function createKeilaSocket (next) {
-
-          console.log(' -------------------------- connecting keila socket');
           keilaSocket = io.connect(url, options);
 
           keilaSocket.emit('connectServer', {email: 'keila.balderrama@gmail.com'});
@@ -89,7 +87,6 @@ describe('Job API Test', function () {
         },
 
         function createSantiagoSocket (next) {
-          console.log('-------------------------- connecting santiago socket');
           santiagoSocket = io.connect(url, options);
 
           santiagoSocket.emit('connectServer', {email: 'santiago.balderrama@gmail.com'});
@@ -106,18 +103,23 @@ describe('Job API Test', function () {
         function createJob (next) {
           console.log('-------------------------- creating job');
           setTimeout(function () {
-            util.createJob(
-              token,
-              app,
-              'wilson.balderrama@gmail.com',
-              ['node.js', 'mongodb', 'express.js'],
-              function (err, res) {
-                console.log(res.body);
-                var data = res.body;
-                res.status.should.equal(200);
-                next(err);
-              }
-            );
+            
+            request(app)
+              .post('/api/jobs')
+              .send({
+                clientEmail: 'wilson.balderrama@gmail.com',
+                skillsRequired: ['node.js', 'mongodb', 'express.js']
+              })
+              .expect(200)
+              .end(function (err, response) {
+                var job = response.body.job;
+                var error = response.body.error;
+
+                should.exist(job);
+                should.not.exist(error);
+                next();
+              });
+            
           }, 1000);
         }
       ],
@@ -218,5 +220,115 @@ describe('Job API Test', function () {
     );
   });
 
+  it('should hire a professional when client selects him.', function (done) {
+    var keilaSocket;
+    var santiagoSocket;
+
+    var keilaJob;
+    var santiagoJob;
+
+    async.parallel(
+      [
+        function createKeilaSocket (next) {
+
+          console.log(' -------------------------- connecting keila socket');
+          keilaSocket = io.connect(url, options);
+
+          keilaSocket.emit('connectServer', {email: 'keila.balderrama@gmail.com'});
+
+          keilaSocket.on('connect', function (data) {
+            console.log('--------------------------Keila is connected');
+          });
+
+          keilaSocket.on('is-someone-available', function (data) {
+            keilaJob = data;
+            console.log('-------------------------- keila was notified');
+            next();
+          });
+        },
+
+        function createSantiagoSocket (next) {
+          console.log('-------------------------- connecting santiago socket');
+          santiagoSocket = io.connect(url, options);
+
+          santiagoSocket.emit('connectServer', {email: 'santiago.balderrama@gmail.com'});
+
+          santiagoSocket.on('connect', function (data) {
+            console.log('--------------------------Santiago is connected');
+          });
+          santiagoSocket.on('is-someone-available', function (data) {
+            santiagoJob = data;
+            console.log('-------------------------- santiago was notified');
+            next();
+          });
+        },
+
+        function createJob (next) {
+          console.log('-------------------------- creating job');
+          setTimeout(function () {
+            util.createJob(
+              token,
+              app,
+              'wilson.balderrama@gmail.com',
+              ['node.js', 'mongodb', 'express.js'],
+              function (err, res) {
+                console.log(res.body);
+                var data = res.body;
+                res.status.should.equal(200);
+                next(err);
+              }
+            );
+          }, 1000);
+        },
+
+        function keilaWantsTakeJob (next) {
+          var email = 'keila.balderrama@gmail.com';
+          setTimeout(function () {
+            util.takeJob(keilaSocket, keilaJob, email, function (data) {
+              console.log('response from take job for ' + email);
+              console.log('was keila selected? :' + !data.error);
+              next();
+            });
+          }, 1500);
+        },
+
+        function santiagoWantsTakeJob (next) {
+          var email = 'santiago.balderrama@gmail.com';
+          setTimeout(function () {
+            util.takeJob(santiagoSocket, santiagoJob, email, function (data) {
+              console.log('response from take job for ' + email);
+              console.log('was santiago selected? :' + !data.error);
+              next();
+            });
+          }, 1500);
+        },
+
+        function clientIsHiringSomeone (next) {
+          setTimeout(function () {
+            util.hireProfessional(keilaSocket, keilaJob, function (err, data) {
+              console.log('hire professional was called?????????');
+              data.job.state.should.equal('hired');
+              next();
+            });
+          }, 2000);
+        },
+
+        function keilaListeninigWhenSomeoneHiresHer (next) {
+          keilaSocket.on('you-are-hired', function (data) {
+            console.log('Keila WAS HIRED !!!!');
+            next();
+          });
+        }
+      ],
+      function (err, res) {
+        console.log('-------------------------- created job');
+        done(err);
+      }
+    );
+  });
+
+  it.only('should be cancelled the job when some of the sides wants to cancel it.');
+
+  it('should select another professional when client is evaluating.');
 });
 

@@ -2,7 +2,6 @@
 
 module.exports = {
   mongo: {
-    uri: 'mongodb://localhost/yobsi-dev'
-  },
-  seedDB: false
+    uri: 'mongodb://localhost/yobsi-api-dev'
+  }
 };

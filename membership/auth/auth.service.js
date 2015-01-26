@@ -9,6 +9,11 @@ var compose = require('composable-middleware');
 var User = require('../professional/professional.model.js');
 var validateJwt = expressJwt({secret: config.secrets.session});
 
+module.exports = {
+  isAuthenticated: isAuthenticated,
+  signToken: signToken
+};
+
 function isAuthenticated () {
   return compose()
     .use(function (req, res, next) {
@@ -22,7 +27,7 @@ function isAuthenticated () {
         }
 
         if (!user) {
-          res.status(401).send({});
+          res.status(401).send({error: 'User not found'});
           return;
         }
 
@@ -44,7 +49,3 @@ function signToken (id) {
   );
 }
 
-module.exports = {
-  isAuthenticated: isAuthenticated,
-  signToken: signToken
-};

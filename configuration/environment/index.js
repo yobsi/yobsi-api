@@ -1,25 +1,15 @@
 'use strict';
 
-var path = require('path');
-var _ = require('lodash');
-
-function requiredProcessEnv (name) {
-  if (!process.env[name]) {
-    throw new Error('You must set ' + name + ' environment variable');
-  }
-
-  return process.env[name];
-}
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
+var _ = require('lodash');
 
 var all = {
-  ip: process.env.IP || 'http://localhost',
   env: process.env.NODE_ENV,
   port: process.env.PORT || 9000,
   seedDB: false,
   secrets: {
-    session: 'secreto'
+    session: process.env.SESSION_SECRET || 'secreto'
   },
   mongo: {
     options: {
@@ -27,10 +17,17 @@ var all = {
         safe: true
       }
     }
+  },
+  logentries: {
+    token: process.env.LOGENTRIES_TOKEN
+  },
+  mailgun: {
+    api_key: process.env.MAILGUN_APIKEY || 'key-43aejvbi-ka-xdqawgednpd50nyy85n4',
+    domain: process.env.MAILGUN_DOMAIN || 'exclusr.com'
   }
 };
 
 module.exports = _.merge(
-    all, 
-    require('./' + process.env.NODE_ENV + '.js') || {}
-  );
+  all, 
+  require('./' + process.env.NODE_ENV + '.js')
+);

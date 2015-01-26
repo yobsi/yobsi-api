@@ -7,6 +7,15 @@ var app = express();
 var server = require('http').Server(app);
 var config = require('./configuration/environment/index.js');
 var io = require('socket.io')(server);
+var logger = require('./configuration/logger.js');
+
+// For production you need to set this env variables first
+// NODE_ENV (development (default), test, production)
+// SESSION_SECRET
+// MONGOLAB_URI
+// MAILGUN_APIKEY
+// MAILGUN_DOMAIN
+// LOGENTRIES_TOKEN
 
 //  configure database
 require('./configuration/mongoose.js')(config);
@@ -22,13 +31,11 @@ require('./configuration/socketio.js')(io);
 
 //  web server listening..
 server.listen(config.port, function () {
-// server.listen(config.port, config.ip, function () {
   console.log('Express server listening on %d in %s mode', config.port, app.get('env'));
 });
 
 process.on('uncaughtException', function (err) {
-  console.log(err);
-  console.log(err.stack);
+  logger.log('error', err.stack);
 });
 
 module.exports = app;

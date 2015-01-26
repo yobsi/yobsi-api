@@ -12,8 +12,19 @@ module.exports = {
   searchForProfessional: searchForProfessional,
   authenticateUser: authenticateUser,
   createJob: createJob,
-  takeJob: takeJob
+  takeJob: takeJob,
+  hireProfessional: hireProfessional
 };
+
+function hireProfessional (socket, job, cb) {
+  socket.emit('hire-professional', {
+    jobId: job._id
+  });
+
+  socket.on('hire-professional', function (data) {
+    cb(null, data);
+  });
+}
 
 function takeJob (socket, job, professionalEmail, cb) {
   socket.emit('want-to-take-job', {

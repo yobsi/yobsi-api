@@ -13,7 +13,14 @@ module.exports.setup = function (User, config) {
       },
       function (email, password, done) {
         User.findOne({
-          email: email.toLowerCase()
+          $or: [
+            {
+              email: email.toLowerCase()          
+            },
+            {
+              username: email.toLowerCase()
+            }
+          ]
         }, function (err, user) {
           if (err) {
             done(err);
@@ -31,10 +38,8 @@ module.exports.setup = function (User, config) {
           }
 
           done(null, user);
-          return;
         });
       }
     )
-
   );
 };
